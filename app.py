@@ -38,12 +38,32 @@ def Generate_input_time_intergration(id='input_time_intergration'):
 
 ###----------------生成右边栏----------------###
 #####--------------生成第一栏--------------#####
+intersting_Value=['date','SR[KHz]','cps','shot noise','contrast','std','allan']
+
+def Genrate_intersting_table(table_header_name=intersting_Value,table_id='intersting_table',row_id='intersting_table_vlaue'):
+    """
+    生成感兴趣值的表格
+    """
+    table_header = [
+    html.Thead(html.Tr([html.Th(name) for name in table_header_name]))
+    ]
+    init_value=np.zeros(len(table_header_name)).tolist()
+    init_value[0]=datetime.now().strftime('%Y-%m-%d %H:%M:%S')    
+    row1 = html.Tr(children=Generate_intersting_table_vlaue(init_value),id=row_id)
+    table_body = [html.Tbody([row1])]
+    table = dbc.Table(table_header + table_body,id=table_id,bordered=True)
+    return table
+def Generate_intersting_table_vlaue(value_list):
+    """
+    生成感兴趣值的表格的值
+    """
+    return [html.Td(value_list[0])]+[html.Td("{:.2f}".format(value)) for value in value_list[1:]]
 def Generate_r_c_row1():
     '''
     生成右边第一栏
     包含我们所感兴趣的结果
     '''
-    return dbc.Row(id='r_c_row1',children=[]
+    return dbc.Row(id='r_c_row1',children=[Genrate_intersting_table()]
     )
 
 #####--------------生成第二栏--------------#####
@@ -122,12 +142,12 @@ app.layout = dbc.Container([
 
 ], fluid=True)
 
-data_dict=pd.DataFrame(columns=['date','SR[KHz]','shot noise','cps','contrast','std','allan']).to_dict()
+
 # Add controls to build the interaction
 @callback(
     [Output(component_id='time_phi_graph', component_property='extendData'),
     Output(component_id='frequency_phi_graph', component_property='extendData'),
-    Output(component_id='r_c_row1', component_property='children')],
+    Output(component_id='intersting_table_vlaue', component_property='children')],
     Input(component_id='interval_component', component_property='n_intervals'),
     Input(component_id='input_time_intergration', component_property='value')
 )
@@ -139,10 +159,10 @@ def update_graph(n,time_intergration):
     freq=np.fft.rfftfreq(data.size,d=1/data.size)
     time_fig = [dict( x=[data_time],y=[data]), [0], data.size]
     freq_fig = [dict( x=[freq],y=[freq_data]), [0], freq.size]
-    
-    data_dict=pd.DataFrame(np.random.rand(1,7),columns=['date','SR[KHz]','shot noise','cps','contrast','std','allan'])
-    
-    return [time_fig, freq_fig,dbc.Table.from_dataframe(pd.DataFrame(data_dict),id='out_put_table')]
+    out_data=np.random.rand(len(intersting_Value)).tolist()
+    out_data[0]=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    out_data[1]=1/time_intergration*1e3
+    return [time_fig, freq_fig,Generate_intersting_table_vlaue(out_data)]
 
 @callback(
     [Output(component_id='cps_phi_graph', component_property='extendData')],
