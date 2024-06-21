@@ -31,14 +31,14 @@ def Generate_input_time_intergration(id='input_time_intergration'):
     """
     return html.Div(children=[
         dbc.Label("输入时间积分窗口[us]:"),
-        dbc.Input(placeholder="Input us here...", value='10',type="number",id=id),
+        dbc.Input(placeholder="Input us here...", value='10',type="number",id=id,min=0.01),
         dbc.FormText("在时间窗口内计数"),
     ])
 
 
 ###----------------生成右边栏----------------###
 #####--------------生成第一栏--------------#####
-intersting_Value=['date','SR[KHz]','cps','shot noise','contrast','std','allan']
+intersting_Value=['Date','SR(KHz)','cps(count/s)','shot noise(deg)','contrast(%)','std(deg)','allan(deg)']
 
 def Genrate_intersting_table(table_header_name=intersting_Value,table_id='intersting_table',row_id='intersting_table_vlaue'):
     """
@@ -76,15 +76,32 @@ def Generate_time_phi_graph():
 
     fig_time_phi.add_trace(
         go.Scatter(x=[1, 2, 3], y=[4, 5, 6],mode='lines', name='$\Delta$'),
-        row=1, col=1
-    )
+        row=1, col=1)
 
     fig_time_phi.add_trace(
         go.Scatter(x=[20, 30, 40], y=[50, 60, 70]),
-        row=1, col=2
-    )
+        row=1, col=2)
+    
+    fig_time_phi.update_xaxes( title='time[us]',rangeslider=dict(visible=True))
+    fig_time_phi.update_yaxes(selector=0, title='$\\varphi$')
     
     return fig_time_phi
+
+def Generate_frequency_graph():
+    """
+    生成频率图
+    """
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(x=[1, 2, 3], y=[4, 5, 6],mode='lines', name='$Frequnecy$'))
+    
+    fig.update_xaxes(title='Frequency[Hz]',type='log',
+                     rangeslider=dict(visible=True))
+    fig.update_yaxes(title='Amplitude',type='log', )
+    fig.update_layout(title='Frequency-Amplitude')
+    
+    return fig
 
 def Generate_r_c_row2():
     """
@@ -93,7 +110,7 @@ def Generate_r_c_row2():
     """
     return dbc.Row(id='r_c_row2',children=[
         dcc.Graph(figure=Generate_time_phi_graph(), id='time_phi_graph',mathjax=True),
-        dcc.Graph(figure=px.line(x=[0],y=[0]), id='frequency_phi_graph') 
+        dcc.Graph(figure=Generate_frequency_graph(), id='frequency_phi_graph',mathjax=True) 
         ])
 
 #####--------------生成第三栏--------------#####
@@ -114,8 +131,8 @@ def Generate_r_c_row3():
     包含结果随时间变化的趋势
     """
     return dbc.Row(id='r_c_row3',children=[
-        daq.BooleanSwitch(id='flag_cps_std', on=False,label="开启统计",labelPosition="top"),
-        dcc.Graph(figure=Generate_cps_phi_graph(), id='cps_phi_graph')
+        dbc.Switch(id="flag_cps_std",label="开启统计",value=False),
+        dbc.Col(dcc.Graph(figure=Generate_cps_phi_graph(), id='cps_phi_graph'))
     ])
 
 # App layout
@@ -133,7 +150,7 @@ app.layout = dbc.Container([
             Generate_input_time_intergration(),
         ]),
 
-        dbc.Col(id='right columns',width='auto',children=[
+        dbc.Col(id='right columns',width=True,children=[
             Generate_r_c_row1(),
             Generate_r_c_row2(),
             Generate_r_c_row3()
@@ -151,9 +168,9 @@ app.layout = dbc.Container([
     Input(component_id='interval_component', component_property='n_intervals'),
     Input(component_id='input_time_intergration', component_property='value')
 )
-def update_graph(n,time_intergration):
+def Update_graph(n,time_intergration):
     time_intergration=float(time_intergration)
-    data=np.random.random(20)
+    data=np.random.random(int(2/time_intergration*1e6))
     data_time=np.arange(data.size)
     freq_data=np.abs(np.fft.rfft(data))
     freq=np.fft.rfftfreq(data.size,d=1/data.size)
@@ -167,7 +184,7 @@ def update_graph(n,time_intergration):
 @callback(
     [Output(component_id='cps_phi_graph', component_property='extendData')],
     Input(component_id='interval_component', component_property='n_intervals'),
-    Input(component_id='flag_cps_std', component_property='on')
+    Input(component_id='flag_cps_std', component_property='value')
 )
 def update_graph(n,flag_cps_std):
     if flag_cps_std:
