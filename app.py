@@ -8,7 +8,19 @@ from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
 import numpy as np
 from datetime import datetime
+from tinydb import TinyDB
 
+db = TinyDB( 'dataBase'+datetime.now().strftime('%Y-%m-%d-%Hh')+'.json')
+
+intersting_Value=['Date','SR(KHz)','cps(count/s)','contrast(%)','shot noise(deg)','std(deg)','allan(deg)']
+
+def Push_data_to_database(data):
+    """
+    将数据存储到数据库
+    data[list]是一个列表，顺序与intersting_Value相同
+    """
+    out_data=dict([(name,value) for name,value in zip(intersting_Value,data)])
+    db.insert(out_data) 
 
 # Initialize the app - incorporate a Dash Bootstrap theme
 external_stylesheets = [dbc.themes.CERULEAN]
@@ -38,8 +50,6 @@ def Generate_input_time_intergration(id='input_time_intergration'):
 
 ###----------------生成右边栏----------------###
 #####--------------生成第一栏--------------#####
-intersting_Value=['Date','SR(KHz)','cps(count/s)','shot noise(deg)','contrast(%)','std(deg)','allan(deg)']
-
 def Genrate_intersting_table(table_header_name=intersting_Value,table_id='intersting_table',row_id='intersting_table_vlaue'):
     """
     生成感兴趣值的表格
@@ -82,7 +92,7 @@ def Generate_time_phi_graph():
         go.Scatter(x=[20, 30, 40], y=[50, 60, 70]),
         row=1, col=2)
     
-    fig_time_phi.update_xaxes( title='time[us]',rangeslider=dict(visible=True))
+    fig_time_phi.update_xaxes( title='time[us]')
     fig_time_phi.update_yaxes(selector=0, title='$\\varphi$')
     
     return fig_time_phi
@@ -121,7 +131,8 @@ def Generate_cps_phi_graph():
     fig_cps_phi = go.Figure()
     fig_cps_phi.add_trace(go.Scatter(
         x=[],
-        y=[]))
+        y=[],
+        mode='markers'))
     return fig_cps_phi
 
 
@@ -150,7 +161,7 @@ app.layout = dbc.Container([
             Generate_input_time_intergration(),
         ]),
 
-        dbc.Col(id='right columns',width=True,children=[
+        dbc.Col(id='right columns',width='auto',children=[
             Generate_r_c_row1(),
             Generate_r_c_row2(),
             Generate_r_c_row3()
@@ -158,6 +169,7 @@ app.layout = dbc.Container([
     ]),
 
 ], fluid=True)
+
 
 
 # Add controls to build the interaction
@@ -179,7 +191,9 @@ def Update_graph(n,time_intergration):
     out_data=np.random.rand(len(intersting_Value)).tolist()
     out_data[0]=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     out_data[1]=1/time_intergration*1e3
+    Push_data_to_database(out_data)
     return [time_fig, freq_fig,Generate_intersting_table_vlaue(out_data)]
+
 
 @callback(
     [Output(component_id='cps_phi_graph', component_property='extendData')],
@@ -187,8 +201,9 @@ def Update_graph(n,time_intergration):
     Input(component_id='flag_cps_std', component_property='value')
 )
 def update_graph(n,flag_cps_std):
+    df=pd.DataFrame(db.all())
     if flag_cps_std:
-        cps_fig=[dict( x=[[n]],y=[[1+n]]), [0], 100]
+        cps_fig=[dict( x=[df['cps(count/s)']],y=[df['std(deg)']]), [0], 100]
     else:
         cps_fig=[dict(x=[[]], y=[[]]), [0], 100]
     return [cps_fig]
