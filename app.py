@@ -124,7 +124,7 @@ def Generate_r_c_row2():
         ])
 
 #####--------------生成第三栏--------------#####
-def Generate_cps_phi_graph():
+def Generate_row3_1_graph():
     """
     生成图表
     """
@@ -142,8 +142,12 @@ def Generate_r_c_row3():
     包含结果随时间变化的趋势
     """
     return dbc.Row(id='r_c_row3',children=[
-        dbc.Switch(id="flag_cps_std",label="开启统计",value=False),
-        dbc.Col(dcc.Graph(figure=Generate_cps_phi_graph(), id='cps_phi_graph'))
+        dbc.Switch(id="flag_row3_1",label="开启统计",value=False),
+        dbc.InputGroup([dbc.InputGroupText("X-axes:"),
+                        dbc.Select(options=intersting_Value,value=intersting_Value[0],id='row3_1_xaxes')]),
+        dbc.InputGroup([dbc.InputGroupText("Y-axes:"),
+                        dbc.Select(options=intersting_Value,value=intersting_Value[1],id='row3_1_yaxes')]),
+        dbc.Col(dcc.Graph(figure=Generate_row3_1_graph(), id='row3_1_graph'))
     ])
 
 # App layout
@@ -173,6 +177,7 @@ app.layout = dbc.Container([
 
 
 # Add controls to build the interaction
+# 更新实时数据 第一列的两张图与第二列的图
 @callback(
     [Output(component_id='time_phi_graph', component_property='extendData'),
     Output(component_id='frequency_phi_graph', component_property='extendData'),
@@ -180,7 +185,7 @@ app.layout = dbc.Container([
     Input(component_id='interval_component', component_property='n_intervals'),
     Input(component_id='input_time_intergration', component_property='value')
 )
-def Update_graph(n,time_intergration):
+def Extend_real_time_graph(n,time_intergration):
     time_intergration=float(time_intergration)
     data=np.random.random(int(2/time_intergration*1e6))
     data_time=np.arange(data.size)
@@ -194,19 +199,37 @@ def Update_graph(n,time_intergration):
     Push_data_to_database(out_data)
     return [time_fig, freq_fig,Generate_intersting_table_vlaue(out_data)]
 
-
+# 更新统计数据
 @callback(
-    [Output(component_id='cps_phi_graph', component_property='extendData')],
+    [Output(component_id='row3_1_graph', component_property='extendData')],
     Input(component_id='interval_component', component_property='n_intervals'),
-    Input(component_id='flag_cps_std', component_property='value')
+    Input(component_id='flag_row3_1', component_property='value'),
+    Input(component_id='row3_1_xaxes', component_property='value'),
+    Input(component_id='row3_1_yaxes', component_property='value')
 )
-def update_graph(n,flag_cps_std):
+def Extend_static_graph(n,flag_cps_std,x_value,y_value):
     df=pd.DataFrame(db.all())
     if flag_cps_std:
-        cps_fig=[dict( x=[df['cps(count/s)']],y=[df['std(deg)']]), [0], 100]
+        fig=[dict( x=[df[x_value]],y=[df[y_value]]), [0], df.shape[0]]
     else:
-        cps_fig=[dict(x=[[]], y=[[]]), [0], 100]
-    return [cps_fig]
+        fig=[dict(x=[[]], y=[[]]), [0], 100]
+    return [fig]
+
+## 更新统计图1的x-y轴
+@callback(
+    Output(component_id='row3_1_graph', component_property='figure'),
+    Input(component_id='row3_1_xaxes', component_property='value'),
+    Input(component_id='row3_1_yaxes', component_property='value')
+)
+def Updated_row3_1_graph_xy(x_value,y_value):
+    """
+    更新row3_1_graph(统计部分第一个图)的x轴和y轴
+    x_value: x轴
+    y_value: y轴
+    """
+    df=pd.DataFrame(db.all())
+    fig=px.scatter(df,x=x_value,y=y_value,title='统计:{} + {}'.format(x_value,y_value))
+    return fig
 
 # Run the app
 if __name__ == '__main__':
