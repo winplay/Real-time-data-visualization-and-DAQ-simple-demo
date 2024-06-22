@@ -24,7 +24,7 @@ python3 app.py
 
 在浏览器打开 [http://127.0.0.1:8050/](http://127.0.0.1:8050/)。成功运行后如下图
 
-![网页效果](C:\Users\yf210\Desktop\9ca01e78-6555-4942-a649-59ef4a71f895_Export-d000823b-0440-4d7c-9264-ce7a436758c0\README\web.jpeg)
+![网页效果](README/web.jpeg)
 
 网页效果
 
@@ -36,7 +36,7 @@ python3 app.py
 
 最初前端设计分为两部分。由左边的参数输入区域和右边的可视化区域构成。设计初稿见下图。
 
-![Untitled](C:\Users\yf210\Desktop\9ca01e78-6555-4942-a649-59ef4a71f895_Export-d000823b-0440-4d7c-9264-ce7a436758c0\README\layout.png)
+![layout](README/layout.png)
 
 前端的最开始构思的时候，现有采用最常见的左边菜单加右边主视图布局，最后发现左边菜单需要输入的参数太少了，导致左边菜单的利用率并不高（~~并不是刚开始Row的宽度设为`Auto` ，导致Row显示的像是Column堆叠在一起，觉得效果还不错~~）。
 
