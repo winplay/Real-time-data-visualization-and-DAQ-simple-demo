@@ -24,7 +24,7 @@ def Push_data_to_database(data):
 
 # Initialize the app - incorporate a Dash Bootstrap theme
 external_stylesheets = [dbc.themes.CERULEAN]
-app = Dash(__name__, external_stylesheets=external_stylesheets)
+app = Dash(__name__,title='Device',update_title='', external_stylesheets=external_stylesheets)
 
 ###----------------生成左边栏----------------###
 def Generate_input_ip_address(id='input_ip_address'):
@@ -156,7 +156,7 @@ app.layout = dbc.Container([
     dcc.Interval(id='interval_component', interval=2*1000, n_intervals=0),
     
     dbc.Row(id='Title_app_name',children=[
-        html.Div('General Application for real-time data visualization and DAQ',className='ten columns offset-by-one')
+        html.H1('General Application for real-time data visualization and DAQ')
     ]),
 
     dbc.Row(id='main windows',children=[
@@ -233,4 +233,4 @@ def Updated_row3_1_graph_xy(x_value,y_value):
 
 # Run the app
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=None)
